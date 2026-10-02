@@ -27,5 +27,22 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "typescript": "^7.0.2"
-  }
+  },
+  "author": "ZeekyBlast",
+  "homepage": "https://github.com/ZeekyBlast/stoatkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZeekyBlast/stoatkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZeekyBlast/stoatkit/issues"
+  },
+  "keywords": [
+    "stoat",
+    "revolt",
+    "bot",
+    "framework",
+    "chat",
+    "typescript"
+  ]
 }

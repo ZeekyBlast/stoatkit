@@ -1,0 +1,146 @@
+[
+  {
+    "type": "Ready",
+    "users": [
+      {
+        "_id": "01M3Y28RASWEXMCVSMZG6V31F4",
+        "username": "testbot",
+        "discriminator": "0002",
+        "avatar": {
+          "_id": "anonymized-file",
+          "tag": "avatars",
+          "filename": "file.jpg",
+          "metadata": {
+            "type": "Image",
+            "width": 736,
+            "height": 736,
+            "thumbhash": [
+              30,
+              40,
+              18,
+              7,
+              2,
+              2,
+              183,
+              150,
+              147,
+              121,
+              119,
+              117,
+              152,
+              102,
+              151,
+              136,
+              135,
+              120,
+              104,
+              244,
+              226,
+              112,
+              135,
+              8
+            ],
+            "animated": false
+          },
+          "content_type": "image/jpeg",
+          "size": 67845
+        },
+        "bot": {
+          "owner": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+        },
+        "relationship": "User",
+        "online": true
+      }
+    ],
+    "servers": [
+      {
+        "_id": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
+        "owner": "01M3XYVYRQV2V92YSSQCZ1GJNM",
+        "name": "Test Server",
+        "channels": [
+          "01M3Y2C8VY9Z55XHTRRFS6C7NT"
+        ],
+        "default_permissions": 77014766592,
+        "approximate_member_count": 1
+      }
+    ],
+    "channels": [
+      {
+        "channel_type": "TextChannel",
+        "_id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+        "server": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
+        "name": "General",
+        "last_message_id": "01M3Y2MPM505GHBQ92C9QMEMMK"
+      }
+    ],
+    "members": [
+      {
+        "_id": {
+          "server": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
+          "user": "01M3Y28RASWEXMCVSMZG6V31F4"
+        },
+        "joined_at": "2026-10-02T10:26:12.203Z"
+      }
+    ],
+    "emojis": [],
+    "voice_states": []
+  },
+  {
+    "type": "ChannelStartTyping",
+    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+  },
+  {
+    "type": "ChannelStopTyping",
+    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+  },
+  {
+    "type": "ChannelStartTyping",
+    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+  },
+  {
+    "type": "Message",
+    "_id": "01M3Y2TGEE7ZBZ4XR3ECKAVCY6",
+    "nonce": "01M3Y2TG7TP7VAHTZ9DR4JBPPJ",
+    "channel": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "author": "01M3XYVYRQV2V92YSSQCZ1GJNM",
+    "user": {
+      "_id": "01M3XYVYRQV2V92YSSQCZ1GJNM",
+      "username": "alice",
+      "discriminator": "0001",
+      "relationship": "None",
+      "online": true
+    },
+    "member": {
+      "_id": {
+        "server": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
+        "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+      },
+      "joined_at": "2026-10-02T10:25:53.061Z"
+    },
+    "content": "e"
+  },
+  {
+    "type": "ChannelStopTyping",
+    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+  },
+  {
+    "type": "MessageUpdate",
+    "id": "01M3Y2TGEE7ZBZ4XR3ECKAVCY6",
+    "channel": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "data": {
+      "content": "eee",
+      "edited": "2026-10-02T10:33:40.884Z",
+      "embeds": []
+    },
+    "clear": []
+  },
+  {
+    "type": "MessageDelete",
+    "id": "01M3Y2TGEE7ZBZ4XR3ECKAVCY6",
+    "channel": "01M3Y2C8VY9Z55XHTRRFS6C7NT"
+  }
+]

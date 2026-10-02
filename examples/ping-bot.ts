@@ -1,5 +1,5 @@
 // A minimal stoatkit bot: answers "!ping" with "pong".
-// Run from packages/stoatkit: node --env-file=.env examples/ping-bot.ts
+// Run from the repo root: node --env-file=.env examples/ping-bot.ts
 import { Client } from "../src/index.ts";
 
 const token = process.env.STOAT_TOKEN;

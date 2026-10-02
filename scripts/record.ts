@@ -1,5 +1,5 @@
 // Records real gateway traffic (60s, or until Ctrl+C) into test/fixtures/session.json for the replay test.
-// Run from packages/stoatkit: node --env-file=.env scripts/record.ts
+// Run from the repo root: node --env-file=.env scripts/record.ts
 import { mkdir, writeFile } from "node:fs/promises";
 
 type Frame = { type: string; v?: Frame[]; [key: string]: unknown };
