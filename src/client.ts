@@ -104,7 +104,7 @@ export class Client extends EventEmitter<ClientEvents> {
         return;
       }
       case "MessageUpdate":
-        void this.#onMessageUpdate(frame as unknown as MessageUpdateFrame);
+        this.#onMessageUpdate(frame as unknown as MessageUpdateFrame).catch((err: unknown) => this.#report(err));
         return;
       case "MessageDelete": {
         const { id, channel } = frame as unknown as { id: string; channel: string };
@@ -144,6 +144,11 @@ export class Client extends EventEmitter<ClientEvents> {
     }
     this.messages.set(after);
     this.#emit("messageUpdate", before, after);
+  }
+
+  /** Called by EventEmitter (captureRejections) when an async listener rejects. Never crashes the process. */
+  [EventEmitter.captureRejectionSymbol](err: unknown): void {
+    this.#report(err);
   }
 
   /** Emits without letting a throwing listener break the gateway loop. */

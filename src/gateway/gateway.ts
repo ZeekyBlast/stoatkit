@@ -50,6 +50,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #socket: SocketLike | null = null;
   #heartbeat: ReturnType<typeof setInterval> | undefined;
   #reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  #handshakeTimer: ReturnType<typeof setTimeout> | undefined;
   #alive = false;
   #attempt = 0;
   #disconnectedAt: number | null = null;
@@ -75,6 +76,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   close(): void {
     this.#stopped = true;
     clearTimeout(this.#reconnectTimer);
+    clearTimeout(this.#handshakeTimer);
     this.#stopHeartbeat();
     this.#socket?.close(1000);
   }
@@ -82,6 +84,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #open(): void {
     const socket = new this.#WebSocket(`${this.#url}?version=1&format=json`);
     this.#socket = socket;
+    // A server that accepts the socket but never authenticates would otherwise leave us waiting forever.
+    this.#handshakeTimer = setTimeout(() => {
+      if (socket !== this.#socket) return;
+      this.#lost();
+      socket.close(4000);
+    }, this.#heartbeatMs);
     // Every handler ignores sockets that are no longer current, so a late close never schedules twice.
     socket.onopen = () => {
       if (socket === this.#socket) socket.send(JSON.stringify({ type: "Authenticate", token: this.#token }));
@@ -109,6 +117,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         for (const inner of (frame.v as GatewayEvent[] | undefined) ?? []) this.#handle(inner);
         return;
       case "Authenticated":
+        clearTimeout(this.#handshakeTimer);
         this.#startHeartbeat();
         return;
       case "Pong":
@@ -163,6 +172,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   /** The current socket is gone: forget it and schedule exactly one reconnect. */
   #lost(): void {
     this.#socket = null;
+    clearTimeout(this.#handshakeTimer);
     this.#stopHeartbeat();
     if (this.#stopped) return;
     this.#disconnectedAt ??= this.#now();
@@ -176,6 +186,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #fail(type: string): void {
     this.#stopped = true;
     clearTimeout(this.#reconnectTimer);
+    clearTimeout(this.#handshakeTimer);
     this.#stopHeartbeat();
     const socket = this.#socket;
     this.#socket = null;

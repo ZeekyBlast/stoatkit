@@ -137,3 +137,15 @@ test("close() stops for good", () => {
   tick(120_000);
   assert.equal(FakeSocket.instances.length, 1);
 });
+
+test("a connection that never authenticates is dropped and retried", () => {
+  const { gw, socket } = makeGateway();
+  gw.connect();
+  socket().open();
+  tick(19_999);
+  assert.equal(FakeSocket.instances.length, 1);
+  tick(1); // no Authenticated within one heartbeat interval
+  assert.equal(socket(0).readyState, 3);
+  tick(1_000);
+  assert.equal(FakeSocket.instances.length, 2);
+});

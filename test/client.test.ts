@@ -33,7 +33,9 @@ afterEach(() => {
   for (const c of clients.splice(0)) c.destroy();
 });
 
-async function connected(options: { messageCacheSize?: number; routes?: Record<string, (body: unknown) => Response> } = {}) {
+async function connected(
+  options: { messageCacheSize?: number; routes?: Record<string, (body: unknown) => Response>; errorListener?: boolean } = {},
+) {
   const { fetch, calls } = routeFetch({
     "GET /": () => json(200, { revolt: "0.15.7", ws: "wss://events.test" }),
     "GET /users/@me": () => json(200, BOT_USER),
@@ -48,7 +50,7 @@ async function connected(options: { messageCacheSize?: number; routes?: Record<s
   });
   clients.push(client);
   const errors: unknown[] = [];
-  client.on("error", (e) => errors.push(e));
+  if (options.errorListener !== false) client.on("error", (e) => errors.push(e));
   const loggedIn = client.login();
   await waitFor(() => FakeSocket.instances.length === 1);
   const socket = FakeSocket.instances[0]!;
@@ -241,4 +243,22 @@ test("login rejects when the gateway refuses the session", async () => {
   FakeSocket.instances[0]!.open();
   FakeSocket.instances[0]!.receive({ type: "Error", data: { type: "InvalidSession" } });
   await assert.rejects(loggedIn, /InvalidSession/);
+});
+
+test("a rejecting async listener with no error listener is logged, not fatal", async (t) => {
+  const logged = t.mock.method(console, "error", () => {});
+  const { client, socket } = await connected({ errorListener: false });
+  client.on("messageCreate", async () => {
+    throw new Error("no permission");
+  });
+  socket.receive(msg(43, "x"));
+  await waitFor(() => logged.mock.callCount() === 1);
+  assert.equal((logged.mock.calls[0]!.arguments[0] as Error).message, "no permission");
+});
+
+test("an update frame without data is reported, not a crash", async () => {
+  const { socket, errors } = await connected();
+  socket.receive(msg(44, "a"));
+  socket.receive({ type: "MessageUpdate", id: id(44), channel: CHANNEL });
+  await waitFor(() => errors.length === 1);
 });

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { RateLimitTimeout, StoatAPIError } from "./errors.ts";
 import { routeKey } from "./routeKey.ts";
@@ -61,6 +62,8 @@ export class Rest {
     const route = `${method} ${path}`;
     const headers: Record<string, string> = { "X-Bot-Token": this.#token };
     if (body !== undefined) headers["Content-Type"] = "application/json";
+    // Same key on every retry, so a send that reached Stoat before the connection failed is not posted twice.
+    if (method === "POST") headers["Idempotency-Key"] = randomUUID();
     const init: RequestInit = { method, headers };
     if (body !== undefined) init.body = JSON.stringify(body);
 

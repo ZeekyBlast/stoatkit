@@ -89,3 +89,12 @@ test("the token never appears in an error", async () => {
     return true;
   });
 });
+
+test("a retried POST reuses one Idempotency-Key so the message is not sent twice", async () => {
+  const { rest, calls } = makeRest([json(502, {}), json(200, { _id: "M1" })]);
+  await rest.request("POST", "/channels/C1/messages", { content: "hi" });
+  const keys = calls.map((c) => c.headers["idempotency-key"]);
+  assert.equal(keys.length, 2);
+  assert.ok(keys[0], "POST carries an Idempotency-Key");
+  assert.equal(keys[0], keys[1]);
+});
