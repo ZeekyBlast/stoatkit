@@ -20,7 +20,9 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test \"test/**/*.test.ts\"",
     "gen:types": "npx -y -p openapi-typescript@7.13.0 -p typescript@5 openapi-typescript https://api.stoat.chat/openapi.json -o src/generated/api.ts && node scripts/spec-version.ts write",
-    "check:spec": "node scripts/spec-version.ts check"
+    "check:spec": "node scripts/spec-version.ts check",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
