@@ -1,0 +1,27 @@
+{
+  "name": "stoatkit",
+  "version": "0.0.1",
+  "description": "A bot framework for Stoat (formerly Revolt) with discord.js-style ergonomics",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.4"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2"
+  }
+}
