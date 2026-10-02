@@ -1,5 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
-import { StoatAPIError } from "./errors.ts";
+import { RateLimitTimeout, StoatAPIError } from "./errors.ts";
+import { routeKey } from "./routeKey.ts";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -9,50 +10,107 @@ export interface RestOptions {
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
   sleep?: (ms: number) => Promise<void>;
-  /** Retries for 5xx answers and network failures. Default 3. */
+  now?: () => number;
+  /** Retries for 5xx answers and network failures. Default 3. 429s are counted separately. */
   maxRetries?: number;
+  /** Throw `RateLimitTimeout` instead of waiting longer than this for a bucket. Default: wait as long as needed. */
+  maxQueueWaitMs?: number;
 }
+
+/** Consecutive 429 answers tolerated before giving up with type "RateLimited". */
+const MAX_RATE_LIMITED = 10;
+
+type Bucket = { remaining: number; resetAt: number };
 
 export class Rest {
   readonly #token: string;
   readonly #baseUrl: string;
   readonly #fetch: typeof globalThis.fetch;
   readonly #sleep: (ms: number) => Promise<void>;
+  readonly #now: () => number;
   readonly #maxRetries: number;
+  readonly #maxQueueWaitMs: number;
+  readonly #buckets = new Map<string, Bucket>();
+  readonly #queues = new Map<string, Promise<unknown>>();
 
   constructor(options: RestOptions) {
     this.#token = options.token;
     this.#baseUrl = options.baseUrl ?? "https://api.stoat.chat";
     this.#fetch = options.fetch ?? globalThis.fetch;
     this.#sleep = options.sleep ?? ((ms) => delay(ms));
+    this.#now = options.now ?? Date.now;
     this.#maxRetries = options.maxRetries ?? 3;
+    this.#maxQueueWaitMs = options.maxQueueWaitMs ?? Infinity;
   }
 
-  async request<T = unknown>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
+  request<T = unknown>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
+    // ponytail: one request at a time per bucket; fine for a bot, revisit if throughput ever matters
+    const key = routeKey(path);
+    const previous = this.#queues.get(key) ?? Promise.resolve();
+    const run = previous.catch(() => {}).then(() => this.#send<T>(key, method, path, body));
+    this.#queues.set(key, run);
+    run
+      .finally(() => {
+        if (this.#queues.get(key) === run) this.#queues.delete(key);
+      })
+      .catch(() => {});
+    return run;
+  }
+
+  async #send<T>(key: string, method: HttpMethod, path: string, body: unknown): Promise<T> {
     const route = `${method} ${path}`;
     const headers: Record<string, string> = { "X-Bot-Token": this.#token };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     const init: RequestInit = { method, headers };
     if (body !== undefined) init.body = JSON.stringify(body);
 
-    for (let attempt = 0; ; attempt++) {
+    let failures = 0;
+    let rateLimited = 0;
+    for (;;) {
+      await this.#waitForBucket(key);
+
       let res: Response;
       try {
         res = await this.#fetch(this.#baseUrl + path, init);
       } catch (err) {
-        if (attempt >= this.#maxRetries) throw err;
-        await this.#sleep(500 * 2 ** attempt);
+        if (failures >= this.#maxRetries) throw err;
+        await this.#sleep(500 * 2 ** failures++);
         continue;
       }
 
+      this.#updateBucket(key, res.headers);
       const parsed = await readBody(res);
       if (res.ok) return parsed as T;
-      if (res.status >= 500 && attempt < this.#maxRetries) {
-        await this.#sleep(500 * 2 ** attempt);
+
+      if (res.status === 429) {
+        if (++rateLimited > MAX_RATE_LIMITED) throw new StoatAPIError(429, "RateLimited", route, parsed);
+        await this.#sleep(Number(res.headers.get("x-ratelimit-reset-after") ?? 1000));
+        continue;
+      }
+      rateLimited = 0;
+
+      if (res.status >= 500 && failures < this.#maxRetries) {
+        await this.#sleep(500 * 2 ** failures++);
         continue;
       }
       throw toError(res.status, route, parsed);
     }
+  }
+
+  async #waitForBucket(key: string): Promise<void> {
+    const bucket = this.#buckets.get(key);
+    if (!bucket || bucket.remaining > 0) return;
+    const wait = bucket.resetAt - this.#now();
+    if (wait <= 0) return;
+    if (wait > this.#maxQueueWaitMs) throw new RateLimitTimeout(key, wait);
+    await this.#sleep(wait);
+  }
+
+  #updateBucket(key: string, headers: Headers): void {
+    const remaining = headers.get("x-ratelimit-remaining");
+    const resetAfter = headers.get("x-ratelimit-reset-after");
+    if (remaining === null || resetAfter === null) return;
+    this.#buckets.set(key, { remaining: Number(remaining), resetAt: this.#now() + Number(resetAfter) });
   }
 }
 
