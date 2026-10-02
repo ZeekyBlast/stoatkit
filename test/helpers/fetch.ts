@@ -42,3 +42,16 @@ export function fakeClock(start = 0) {
     slept,
   };
 }
+
+/** A fake fetch that answers by "METHOD /path". Unknown routes answer 404 NotFound. */
+export function routeFetch(routes: Record<string, (body: unknown) => Response>) {
+  const calls: FetchCall[] = [];
+  const fetch = async (input: string | URL | Request, init: RequestInit = {}): Promise<Response> => {
+    const method = init.method ?? "GET";
+    const body = typeof init.body === "string" ? JSON.parse(init.body) : undefined;
+    calls.push({ url: String(input), method, headers: Object.fromEntries(new Headers(init.headers).entries()), body });
+    const handler = routes[`${method} ${new URL(String(input)).pathname}`];
+    return handler ? handler(body) : json(404, { type: "NotFound" });
+  };
+  return { fetch: fetch as typeof globalThis.fetch, calls };
+}

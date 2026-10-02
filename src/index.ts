@@ -1,3 +1,12 @@
 export { ulidToDate, isUlid } from "./util/ulid.ts";
 export { parseMention, userMention, roleMention, channelMention, type MentionType } from "./util/mentions.ts";
 export { parseDuration } from "./util/duration.ts";
+export { Client, type ClientOptions, type DeletedMessage } from "./client.ts";
+export { Message } from "./structures/message.ts";
+export { User } from "./structures/user.ts";
+export { Channel } from "./structures/channel.ts";
+export { Rest, type RestOptions, type HttpMethod } from "./rest/rest.ts";
+export { StoatAPIError, RateLimitTimeout } from "./rest/errors.ts";
+export { Gateway, type GatewayOptions, type SocketLike, type SocketConstructor, type GatewayEvent } from "./gateway/gateway.ts";
+export { STOAT_API_VERSION } from "./generated/version.ts";
+export type { components as StoatSchemas } from "./generated/api.ts";
