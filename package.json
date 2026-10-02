@@ -18,7 +18,9 @@
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "gen:types": "npx -y -p openapi-typescript@7.13.0 -p typescript@5 openapi-typescript https://api.stoat.chat/openapi.json -o src/generated/api.ts && node scripts/spec-version.ts write",
+    "check:spec": "node scripts/spec-version.ts check"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
