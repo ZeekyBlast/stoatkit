@@ -9,8 +9,9 @@ export {
   type LeaveReason,
   type AuditAction,
   type AuditLogEntry,
+  type InviteInfo,
 } from "./client.ts";
-export { Message } from "./structures/message.ts";
+export { Message, type Attachment } from "./structures/message.ts";
 export { User } from "./structures/user.ts";
 export { Channel } from "./structures/channel.ts";
 export { Server } from "./structures/server.ts";

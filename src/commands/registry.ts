@@ -142,6 +142,7 @@ export class CommandRegistry {
   /** Runs the command in `message`, if there is one. The client calls this for every new message. */
   async handle(message: Message): Promise<void> {
     if (this.#commands.length === 0) return;
+    if (message.isSystem || message.isWebhook) return; // a webhook's "author" isn't a member; system messages aren't commands
     const client = this.#client;
     const channel = message.channel;
     const server = channel?.server;

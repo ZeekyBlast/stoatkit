@@ -7,6 +7,7 @@ import { Gateway, type GatewayEvent, type SocketConstructor } from "./gateway/ga
 import type { components } from "./generated/api.ts";
 import { isCommand, isEvent, loadModules, type EventDefinition, type LoadResult } from "./loader.ts";
 import { missingPermissions } from "./permissions.ts";
+import { StoatAPIError } from "./rest/errors.ts";
 import { Rest } from "./rest/rest.ts";
 import { Channel } from "./structures/channel.ts";
 import { Member, type RawMember } from "./structures/member.ts";
@@ -85,6 +86,15 @@ const EVENT_NAMES: Record<keyof ClientEvents, true> = {
 const AUDIT_WINDOW_MS = 30_000;
 
 /** What `messageDelete` gives you: the full message if it was cached, otherwise just its ids. */
+/** What an invite code points at. */
+export interface InviteInfo {
+  code: string;
+  type: "Server" | "Group";
+  serverId: string | null;
+  serverName: string | null;
+  channelId: string;
+}
+
 export type DeletedMessage = Message | { id: string; channelId: string };
 
 /** Every event the client emits, with its arguments. */
@@ -237,6 +247,19 @@ export class Client extends EventEmitter<ClientEvents> {
     const user = new User(this, await this.rest.request<RawUser>("GET", `/users/${userId}`));
     this.users.set(user.id, user);
     return user;
+  }
+
+  /** What an invite code points at. null when Stoat doesn't know the code. */
+  async fetchInvite(code: string): Promise<InviteInfo | null> {
+    try {
+      const raw = await this.rest.request<Schemas["InviteResponse"]>("GET", `/invites/${encodeURIComponent(code)}`);
+      return raw.type === "Server"
+        ? { code: raw.code, type: "Server", serverId: raw.server_id, serverName: raw.server_name, channelId: raw.channel_id }
+        : { code: raw.code, type: "Group", serverId: null, serverName: null, channelId: raw.channel_id };
+    } catch (err) {
+      if (err instanceof StoatAPIError && err.status === 404) return null;
+      throw err;
+    }
   }
 
   /** Disconnects for good. */

@@ -30,6 +30,9 @@ export class Channel {
   readonly rolePermissions: Record<string, OverrideField>;
   /** Seconds between messages per member. 0 means off. */
   readonly slowmode: number;
+  /** Age-restricted channel. */
+  readonly nsfw: boolean;
+  readonly description: string | null;
 
   constructor(client: Client, raw: RawChannel) {
     this.#client = client;
@@ -41,6 +44,8 @@ export class Channel {
     this.defaultPermissions = "default_permissions" in raw ? (raw.default_permissions ?? null) : null;
     this.rolePermissions = "role_permissions" in raw ? (raw.role_permissions ?? {}) : {};
     this.slowmode = "slowmode" in raw ? (raw.slowmode ?? 0) : 0;
+    this.nsfw = "nsfw" in raw ? (raw.nsfw ?? false) : false;
+    this.description = "description" in raw ? (raw.description ?? null) : null;
   }
 
   get server(): Server | undefined {

@@ -6,7 +6,7 @@
 
 A bot framework for [Stoat](https://stoat.chat) (formerly Revolt) with discord.js-style ergonomics.
 
-> **Status: 0.1.x.** Usable for real bots; the API may still change between minor versions until 1.0.
+> **Status: 0.2.x.** Usable for real bots; the API may still change between minor versions until 1.0.
 
 ## Install
 
@@ -87,6 +87,7 @@ declare module "stoatkit" {
 - **Who did it**: after a kick, ban, role delete or channel delete, an `auditLogEntry` event names who did it. This needs View Audit Logs, and can be turned off with `auditLookup: false`.
 - **Servers, roles, members and channels** in the cache, with before/after events.
 - **Edits and deletes with the original message.** Stoat's delete event only carries an id. stoatkit keeps the newest 200 messages per channel (`messageCacheSize`), so `messageDelete` hands you the full message when it was cached, and `messageUpdate` gives you the before and after.
+- **Messages** expose attachments, user and role mentions, and whether they came from the system or a webhook; `client.fetchInvite(code)` resolves an invite.
 - **EmbedBuilder** with a discord.js-like API. Stoat embeds have no fields or footer, so those become markdown in the description.
 - **REST with rate limits.** Requests queue per Stoat rate-limit bucket (all `/servers/:id` calls share one), wait out `429`s, and retry server errors with backoff. Message sends carry an `Idempotency-Key`, so a retry never posts twice. Failures throw a typed `StoatAPIError`.
 - **A gateway that keeps itself alive.** Heartbeats, reconnects with exponential backoff, and drops connections that open but never authenticate. `reconnected` tells you how long you were gone; `ready` fires again after every reconnect.

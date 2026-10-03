@@ -3,9 +3,17 @@ import { toMessageBody, type MessagePayload } from "../embed.ts";
 import type { components } from "../generated/api.ts";
 import { ulidToDate } from "../util/ulid.ts";
 import type { Channel } from "./channel.ts";
+import type { Member } from "./member.ts";
 import type { User } from "./user.ts";
 
 export type RawMessage = components["schemas"]["Message"];
+
+export interface Attachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
 
 export class Message {
   readonly #client: Client;
@@ -15,6 +23,13 @@ export class Message {
   readonly authorId: string;
   readonly content: string;
   readonly editedAt: Date | null;
+  readonly attachments: Attachment[];
+  /** Users mentioned in the message. */
+  readonly mentionIds: string[];
+  readonly roleMentionIds: string[];
+  /** A Stoat system message (joins, pins, ...), not something a member typed. */
+  readonly isSystem: boolean;
+  readonly isWebhook: boolean;
 
   constructor(client: Client, raw: RawMessage) {
     this.#client = client;
@@ -24,6 +39,11 @@ export class Message {
     this.authorId = raw.author;
     this.content = raw.content ?? "";
     this.editedAt = raw.edited ? new Date(raw.edited) : null;
+    this.attachments = (raw.attachments ?? []).map((f) => ({ id: f._id, filename: f.filename, contentType: f.content_type, size: f.size }));
+    this.mentionIds = raw.mentions ?? [];
+    this.roleMentionIds = raw.role_mentions ?? [];
+    this.isSystem = raw.system != null;
+    this.isWebhook = raw.webhook != null;
   }
 
   get createdAt(): Date {
@@ -36,6 +56,12 @@ export class Message {
 
   get channel(): Channel | undefined {
     return this.#client.channels.get(this.channelId);
+  }
+
+  /** The author's cached member in this channel's server. */
+  get member(): Member | undefined {
+    const serverId = this.channel?.serverId;
+    return serverId ? this.#client.members.get(serverId, this.authorId) : undefined;
   }
 
   async reply(payload: MessagePayload): Promise<Message> {
