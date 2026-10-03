@@ -85,16 +85,12 @@ const EVENT_NAMES: Record<keyof ClientEvents, true> = {
 /** An audit entry counts if it is at most this much older than the event (Stoat's clock may differ from ours). */
 const AUDIT_WINDOW_MS = 30_000;
 
-/** What `messageDelete` gives you: the full message if it was cached, otherwise just its ids. */
-/** What an invite code points at. */
-export interface InviteInfo {
-  code: string;
-  type: "Server" | "Group";
-  serverId: string | null;
-  serverName: string | null;
-  channelId: string;
-}
+/** What an invite code points at. Check `type` and TypeScript knows whether `serverId` is set. */
+export type InviteInfo =
+  | { code: string; type: "Server"; serverId: string; serverName: string; channelId: string }
+  | { code: string; type: "Group"; serverId: null; serverName: null; channelId: string };
 
+/** What `messageDelete` gives you: the full message if it was cached, otherwise just its ids. */
 export type DeletedMessage = Message | { id: string; channelId: string };
 
 /** Every event the client emits, with its arguments. */
@@ -249,13 +245,16 @@ export class Client extends EventEmitter<ClientEvents> {
     return user;
   }
 
-  /** What an invite code points at. null when Stoat doesn't know the code. */
+  /** What an invite code points at. null when the code isn't an invite token, or Stoat doesn't know it. */
   async fetchInvite(code: string): Promise<InviteInfo | null> {
+    if (!/^[A-Za-z0-9_-]+$/.test(code)) return null; // ".." would otherwise reach another route
     try {
-      const raw = await this.rest.request<Schemas["InviteResponse"]>("GET", `/invites/${encodeURIComponent(code)}`);
-      return raw.type === "Server"
-        ? { code: raw.code, type: "Server", serverId: raw.server_id, serverName: raw.server_name, channelId: raw.channel_id }
-        : { code: raw.code, type: "Group", serverId: null, serverName: null, channelId: raw.channel_id };
+      const raw = await this.rest.request<Schemas["InviteResponse"]>("GET", `/invites/${code}`);
+      if (raw.type === "Server") {
+        return { code: raw.code, type: "Server", serverId: raw.server_id, serverName: raw.server_name, channelId: raw.channel_id };
+      }
+      if (raw.type === "Group") return { code: raw.code, type: "Group", serverId: null, serverName: null, channelId: raw.channel_id };
+      return null;
     } catch (err) {
       if (err instanceof StoatAPIError && err.status === 404) return null;
       throw err;
