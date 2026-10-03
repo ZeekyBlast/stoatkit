@@ -1,6 +1,6 @@
 {
   "name": "stoatkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A bot framework for Stoat (formerly Revolt) with discord.js-style ergonomics",
   "type": "module",
   "license": "MIT",
