@@ -1,4 +1,4 @@
-// Records real gateway traffic (60s, or until Ctrl+C) into test/fixtures/session.json for the replay test.
+// Records real gateway traffic (5 minutes, or until Ctrl+C) into test/fixtures/session.json for the replay test.
 // Run from the repo root: node --env-file=.env scripts/record.ts
 import { mkdir, writeFile } from "node:fs/promises";
 
@@ -29,7 +29,14 @@ const socket = new WebSocket(`${ws}?version=1&format=json`);
 socket.onopen = () => socket.send(JSON.stringify({ type: "Authenticate", token }));
 socket.onmessage = (ev) => keep(JSON.parse(String(ev.data)) as Frame);
 const ping = setInterval(() => socket.send(JSON.stringify({ type: "Ping", data: Date.now() })), 20_000);
-console.log("Recording: send a message, edit it, then delete it in your test server. Ctrl+C (or 60s) to save.");
+console.log(
+  "Recording. In your test server, in this order:\n" +
+    "  1. send a message, edit it, delete it\n" +
+    "  2. create a role, rename it, delete it\n" +
+    "  3. create a channel, rename it, delete it\n" +
+    "  4. have a second account join, give it a role, then kick it\n" +
+    "Ctrl+C (or 5 minutes) to save.",
+);
 
 let saved = false;
 async function save(): Promise<void> {
@@ -44,4 +51,4 @@ async function save(): Promise<void> {
   process.exit(0);
 }
 process.on("SIGINT", () => void save());
-setTimeout(() => void save(), 60_000);
+setTimeout(() => void save(), 300_000);

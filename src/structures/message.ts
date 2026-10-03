@@ -1,4 +1,5 @@
 import type { Client } from "../client.ts";
+import { toMessageBody, type MessagePayload } from "../embed.ts";
 import type { components } from "../generated/api.ts";
 import { ulidToDate } from "../util/ulid.ts";
 import type { Channel } from "./channel.ts";
@@ -37,18 +38,17 @@ export class Message {
     return this.#client.channels.get(this.channelId);
   }
 
-  async reply(content: string): Promise<Message> {
+  async reply(payload: MessagePayload): Promise<Message> {
     const raw = await this.#client.rest.request<RawMessage>("POST", `/channels/${this.channelId}/messages`, {
-      content,
+      ...toMessageBody(payload),
       replies: [{ id: this.id, mention: false }],
     });
     return new Message(this.#client, raw);
   }
 
-  async edit(content: string): Promise<Message> {
-    const raw = await this.#client.rest.request<RawMessage>("PATCH", `/channels/${this.channelId}/messages/${this.id}`, {
-      content,
-    });
+  async edit(payload: MessagePayload): Promise<Message> {
+    const path = `/channels/${this.channelId}/messages/${this.id}`;
+    const raw = await this.#client.rest.request<RawMessage>("PATCH", path, toMessageBody(payload));
     return new Message(this.#client, raw);
   }
 

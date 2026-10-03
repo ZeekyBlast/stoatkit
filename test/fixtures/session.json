@@ -3,50 +3,23 @@
     "type": "Ready",
     "users": [
       {
-        "_id": "01M3Y28RASWEXMCVSMZG6V31F4",
+        "_id": "01M3Y28RASRJRY2D7157KWV6SM",
         "username": "testbot",
-        "discriminator": "0002",
+        "discriminator": "0001",
         "avatar": {
           "_id": "anonymized-file",
           "tag": "avatars",
           "filename": "file.jpg",
           "metadata": {
             "type": "Image",
-            "width": 736,
-            "height": 736,
-            "thumbhash": [
-              30,
-              40,
-              18,
-              7,
-              2,
-              2,
-              183,
-              150,
-              147,
-              121,
-              119,
-              117,
-              152,
-              102,
-              151,
-              136,
-              135,
-              120,
-              104,
-              244,
-              226,
-              112,
-              135,
-              8
-            ],
-            "animated": false
+            "width": 1,
+            "height": 1
           },
           "content_type": "image/jpeg",
-          "size": 67845
+          "size": 1
         },
         "bot": {
-          "owner": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+          "owner": "01M3XYVYRQVX7YWPSF0ENR5QYP"
         },
         "relationship": "User",
         "online": true
@@ -54,30 +27,30 @@
     ],
     "servers": [
       {
-        "_id": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
-        "owner": "01M3XYVYRQV2V92YSSQCZ1GJNM",
+        "_id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+        "owner": "01M3XYVYRQVX7YWPSF0ENR5QYP",
         "name": "Test Server",
         "channels": [
-          "01M3Y2C8VY9Z55XHTRRFS6C7NT"
+          "01M3Y2C8VY376P6EHB956BGVCN"
         ],
         "default_permissions": 77014766592,
-        "approximate_member_count": 1
+        "approximate_member_count": 2
       }
     ],
     "channels": [
       {
         "channel_type": "TextChannel",
-        "_id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
-        "server": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
+        "_id": "01M3Y2C8VY376P6EHB956BGVCN",
+        "server": "01M3Y2C8VYCTPQHJ9EV382SE5D",
         "name": "General",
-        "last_message_id": "01M3Y2MPM505GHBQ92C9QMEMMK"
+        "last_message_id": "01M3Y2TGEE40N6H2ZQRW2T6X7K"
       }
     ],
     "members": [
       {
         "_id": {
-          "server": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
-          "user": "01M3Y28RASWEXMCVSMZG6V31F4"
+          "server": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+          "user": "01M3Y28RASRJRY2D7157KWV6SM"
         },
         "joined_at": "2026-10-02T10:26:12.203Z"
       }
@@ -87,36 +60,36 @@
   },
   {
     "type": "ChannelStartTyping",
-    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
-    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+    "id": "01M3Y2C8VY376P6EHB956BGVCN",
+    "user": "01M3XYVYRQVX7YWPSF0ENR5QYP"
   },
   {
     "type": "ChannelStopTyping",
-    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
-    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+    "id": "01M3Y2C8VY376P6EHB956BGVCN",
+    "user": "01M3XYVYRQVX7YWPSF0ENR5QYP"
   },
   {
     "type": "ChannelStartTyping",
-    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
-    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+    "id": "01M3Y2C8VY376P6EHB956BGVCN",
+    "user": "01M3XYVYRQVX7YWPSF0ENR5QYP"
   },
   {
     "type": "Message",
-    "_id": "01M3Y2TGEE7ZBZ4XR3ECKAVCY6",
-    "nonce": "01M3Y2TG7TP7VAHTZ9DR4JBPPJ",
-    "channel": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
-    "author": "01M3XYVYRQV2V92YSSQCZ1GJNM",
+    "_id": "01M3ZT6M4V543S9PAMPPMXQ3GW",
+    "nonce": "01M3ZT6KXDQPNB2A7A7YZVR28T",
+    "channel": "01M3Y2C8VY376P6EHB956BGVCN",
+    "author": "01M3XYVYRQVX7YWPSF0ENR5QYP",
     "user": {
-      "_id": "01M3XYVYRQV2V92YSSQCZ1GJNM",
-      "username": "alice",
+      "_id": "01M3XYVYRQVX7YWPSF0ENR5QYP",
+      "username": "user2",
       "discriminator": "0001",
       "relationship": "None",
       "online": true
     },
     "member": {
       "_id": {
-        "server": "01M3Y2C8VYWQYNVV54EJ65J4ZW",
-        "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+        "server": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+        "user": "01M3XYVYRQVX7YWPSF0ENR5QYP"
       },
       "joined_at": "2026-10-02T10:25:53.061Z"
     },
@@ -124,23 +97,130 @@
   },
   {
     "type": "ChannelStopTyping",
-    "id": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
-    "user": "01M3XYVYRQV2V92YSSQCZ1GJNM"
+    "id": "01M3Y2C8VY376P6EHB956BGVCN",
+    "user": "01M3XYVYRQVX7YWPSF0ENR5QYP"
   },
   {
     "type": "MessageUpdate",
-    "id": "01M3Y2TGEE7ZBZ4XR3ECKAVCY6",
-    "channel": "01M3Y2C8VY9Z55XHTRRFS6C7NT",
+    "id": "01M3ZT6M4V543S9PAMPPMXQ3GW",
+    "channel": "01M3Y2C8VY376P6EHB956BGVCN",
     "data": {
-      "content": "eee",
-      "edited": "2026-10-02T10:33:40.884Z",
+      "content": "ee",
+      "edited": "2026-10-03T02:41:31.162Z",
       "embeds": []
     },
     "clear": []
   },
   {
     "type": "MessageDelete",
-    "id": "01M3Y2TGEE7ZBZ4XR3ECKAVCY6",
-    "channel": "01M3Y2C8VY9Z55XHTRRFS6C7NT"
+    "id": "01M3ZT6M4V543S9PAMPPMXQ3GW",
+    "channel": "01M3Y2C8VY376P6EHB956BGVCN"
+  },
+  {
+    "type": "ServerRoleUpdate",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "role_id": "01M3ZT75DHAP9JMS9E17V81MV1",
+    "data": {
+      "id": "01M3ZT75DHAP9JMS9E17V81MV1",
+      "name": "ew",
+      "permissions": {
+        "a": 0,
+        "d": 0
+      },
+      "hoist": false,
+      "rank": 0
+    },
+    "clear": []
+  },
+  {
+    "type": "ServerRoleUpdate",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "role_id": "01M3ZT75DHAP9JMS9E17V81MV1",
+    "data": {
+      "name": "ewew"
+    },
+    "clear": []
+  },
+  {
+    "type": "ServerRoleDelete",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "role_id": "01M3ZT75DHAP9JMS9E17V81MV1"
+  },
+  {
+    "type": "ServerUpdate",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "data": {
+      "channels": [
+        "01M3Y2C8VY376P6EHB956BGVCN",
+        "01M3ZT7S9EDKFMHXM5EQ86BHQJ"
+      ]
+    },
+    "clear": []
+  },
+  {
+    "type": "ChannelCreate",
+    "channel_type": "TextChannel",
+    "_id": "01M3ZT7S9EDKFMHXM5EQ86BHQJ",
+    "server": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "name": "ew"
+  },
+  {
+    "type": "ChannelUpdate",
+    "id": "01M3ZT7S9EDKFMHXM5EQ86BHQJ",
+    "data": {
+      "name": "ewew"
+    },
+    "clear": []
+  },
+  {
+    "type": "ChannelDelete",
+    "id": "01M3ZT7S9EDKFMHXM5EQ86BHQJ"
+  },
+  {
+    "type": "ServerMemberJoin",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "user": "01M3ZT9SZ3J3NQ0H02ZW2T8QGF",
+    "member": {
+      "_id": {
+        "server": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+        "user": "01M3ZT9SZ3J3NQ0H02ZW2T8QGF"
+      },
+      "joined_at": "2026-10-03T02:44:22.152Z"
+    }
+  },
+  {
+    "type": "ServerRoleUpdate",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "role_id": "01M3ZTCJVMJN0NBJ45W5MG9F23",
+    "data": {
+      "id": "01M3ZTCJVMJN0NBJ45W5MG9F23",
+      "name": "ew",
+      "permissions": {
+        "a": 0,
+        "d": 0
+      },
+      "hoist": false,
+      "rank": 0
+    },
+    "clear": []
+  },
+  {
+    "type": "ServerMemberUpdate",
+    "id": {
+      "server": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+      "user": "01M3ZT9SZ3J3NQ0H02ZW2T8QGF"
+    },
+    "data": {
+      "roles": [
+        "01M3ZTCJVMJN0NBJ45W5MG9F23"
+      ]
+    },
+    "clear": []
+  },
+  {
+    "type": "ServerMemberLeave",
+    "id": "01M3Y2C8VYCTPQHJ9EV382SE5D",
+    "user": "01M3ZT9SZ3J3NQ0H02ZW2T8QGF",
+    "reason": "Kick"
   }
 ]

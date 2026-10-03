@@ -1,72 +1,27 @@
-import { test, beforeEach, afterEach } from "node:test";
+import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "../src/client.ts";
+import { defineEvent } from "../src/loader.ts";
 import { Message } from "../src/structures/message.ts";
 import { StoatAPIError } from "../src/rest/errors.ts";
 import { FakeSocket } from "./helpers/socket.ts";
 import { routeFetch, json } from "./helpers/fetch.ts";
 import { waitFor } from "./helpers/wait.ts";
-
-/** Valid ULIDs that all decode to 2026-10-02T12:00:00.000Z. */
-const id = (n: number) => "01M3Y7RKG0" + String(n).padStart(16, "0");
-const BOT = id(1);
-const USER = id(2);
-const CHANNEL = id(3);
-const SERVER = id(4);
-
-const BOT_USER = { _id: BOT, username: "vela", discriminator: "0001", bot: { owner: USER } };
-const READY = {
-  type: "Ready",
-  users: [BOT_USER, { _id: USER, username: "alice", discriminator: "1234", display_name: "Alice" }],
-  channels: [{ _id: CHANNEL, channel_type: "TextChannel", name: "general", server: SERVER }],
-  servers: [],
-  members: [],
-};
-
-const msg = (n: number, content: string, author = USER) => ({ type: "Message", _id: id(n), channel: CHANNEL, author, content });
+import { connected, destroyClients, id, msg, BOT, BOT_USER, CHANNEL, SERVER, USER } from "./helpers/client.ts";
 
 const clients: Client[] = [];
-beforeEach(() => {
+afterEach(() => {
+  destroyClients();
+  for (const c of clients.splice(0)) c.destroy();
   FakeSocket.instances = [];
 });
-afterEach(() => {
-  for (const c of clients.splice(0)) c.destroy();
-});
-
-async function connected(
-  options: { messageCacheSize?: number; routes?: Record<string, (body: unknown) => Response>; errorListener?: boolean } = {},
-) {
-  const { fetch, calls } = routeFetch({
-    "GET /": () => json(200, { revolt: "0.15.7", ws: "wss://events.test" }),
-    "GET /users/@me": () => json(200, BOT_USER),
-    ...options.routes,
-  });
-  const client = new Client({
-    token: "t0k",
-    baseUrl: "https://api.test",
-    fetch,
-    WebSocket: FakeSocket,
-    ...(options.messageCacheSize === undefined ? {} : { messageCacheSize: options.messageCacheSize }),
-  });
-  clients.push(client);
-  const errors: unknown[] = [];
-  if (options.errorListener !== false) client.on("error", (e) => errors.push(e));
-  const loggedIn = client.login();
-  await waitFor(() => FakeSocket.instances.length === 1);
-  const socket = FakeSocket.instances[0]!;
-  socket.open();
-  socket.receive({ type: "Authenticated" });
-  socket.receive(READY);
-  await loggedIn;
-  return { client, socket, calls, errors };
-}
 
 test("login discovers the gateway, loads the bot user and waits for Ready", async () => {
   const { client, calls } = await connected();
   assert.deepEqual(calls.map((c) => `${c.method} ${new URL(c.url).pathname}`), ["GET /", "GET /users/@me"]);
   assert.equal(FakeSocket.instances[0]!.url, "wss://events.test?version=1&format=json");
   assert.equal(client.user?.id, BOT);
-  assert.equal(client.users.get(USER)?.displayName, "Alice");
+  assert.equal(client.users.get(USER)?.displayName, "Zeeky");
   assert.equal(client.channels.get(CHANNEL)?.name, "general");
 });
 
@@ -78,7 +33,7 @@ test("messageCreate gives a Message with its author", async () => {
   assert.equal(got.length, 1);
   assert.ok(got[0] instanceof Message);
   assert.equal(got[0]!.content, "hello");
-  assert.equal(got[0]!.author?.username, "alice");
+  assert.equal(got[0]!.author?.username, "zeeky");
   assert.equal(got[0]!.createdAt.toISOString(), "2026-10-02T12:00:00.000Z");
 });
 
@@ -182,7 +137,7 @@ test("bulk delete returns the cached messages it can", async () => {
 });
 
 test("the message cache keeps only the newest N per channel", async () => {
-  const { client, socket } = await connected({ messageCacheSize: 2 });
+  const { client, socket } = await connected({ options: { messageCacheSize: 2 } });
   socket.receive(msg(30, "one"));
   socket.receive(msg(31, "two"));
   socket.receive(msg(32, "three"));
@@ -261,4 +216,68 @@ test("an update frame without data is reported, not a crash", async () => {
   socket.receive(msg(44, "a"));
   socket.receive({ type: "MessageUpdate", id: id(44), channel: CHANNEL });
   await waitFor(() => errors.length === 1);
+});
+
+test("an async error listener that fails is logged, not fed back into itself", async (t) => {
+  const logged = t.mock.method(console, "error", () => {});
+  const { client, socket } = await connected({ errorListener: false });
+  let calls = 0;
+  client.on("error", async () => {
+    if (++calls > 5) return; // stops a loop, so a regression fails instead of hanging
+    throw new Error("log send failed");
+  });
+  client.on("messageCreate", () => {
+    throw new Error("listener bug");
+  });
+  socket.receive(msg(60, "hi"));
+  await waitFor(() => logged.mock.callCount() === 1);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(calls, 1);
+  assert.equal((logged.mock.calls[0]!.arguments[0] as Error).message, "log send failed");
+});
+
+test("a sync error listener that throws is logged, not a crash", async (t) => {
+  const logged = t.mock.method(console, "error", () => {});
+  const { client, socket } = await connected({ errorListener: false });
+  let calls = 0;
+  client.on("error", () => {
+    if (++calls > 5) return;
+    throw new Error("sync log failed");
+  });
+  client.on("messageCreate", () => {
+    throw new Error("listener bug");
+  });
+  socket.receive(msg(61, "hi"));
+  assert.equal(calls, 1);
+  assert.equal((logged.mock.calls[0]!.arguments[0] as Error).message, "sync log failed");
+});
+
+test("an error event file that fails is logged with its label, not fed back into itself", async (t) => {
+  const logged = t.mock.method(console, "error", () => {});
+  const { client, socket } = await connected({ errorListener: false });
+  let calls = 0;
+  client.addEvent(
+    defineEvent({
+      name: "error",
+      run: async () => {
+        if (++calls > 5) return;
+        throw new Error("log channel gone");
+      },
+    }),
+    "events/error.ts",
+  );
+  client.on("messageCreate", () => {
+    throw new Error("listener bug");
+  });
+  socket.receive(msg(62, "hi"));
+  await waitFor(() => logged.mock.callCount() === 1);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(calls, 1);
+  assert.equal((logged.mock.calls[0]!.arguments[0] as Error).message, "events/error.ts (error) failed: log channel gone");
+});
+
+test("a malformed frame is reported, not a crash", async () => {
+  const { socket, errors } = await connected();
+  socket.receive({ type: "ServerMemberJoin", id: SERVER, user: id(63) }); // no member object
+  assert.equal(errors.length, 1);
 });

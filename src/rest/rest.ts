@@ -5,6 +5,11 @@ import { routeKey } from "./routeKey.ts";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+export interface RequestOptions {
+  /** Stored in the server's audit log. Sent as the `X-Audit-Log-Reason` header. */
+  reason?: string;
+}
+
 export interface RestOptions {
   token: string;
   /** Default `https://api.stoat.chat`. */
@@ -44,11 +49,11 @@ export class Rest {
     this.#maxQueueWaitMs = options.maxQueueWaitMs ?? Infinity;
   }
 
-  request<T = unknown>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
+  request<T = unknown>(method: HttpMethod, path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
     // ponytail: one request at a time per bucket; fine for a bot, revisit if throughput ever matters
     const key = routeKey(path);
     const previous = this.#queues.get(key) ?? Promise.resolve();
-    const run = previous.catch(() => {}).then(() => this.#send<T>(key, method, path, body));
+    const run = previous.catch(() => {}).then(() => this.#send<T>(key, method, path, body, options));
     this.#queues.set(key, run);
     run
       .finally(() => {
@@ -58,10 +63,11 @@ export class Rest {
     return run;
   }
 
-  async #send<T>(key: string, method: HttpMethod, path: string, body: unknown): Promise<T> {
+  async #send<T>(key: string, method: HttpMethod, path: string, body: unknown, options: RequestOptions): Promise<T> {
     const route = `${method} ${path}`;
     const headers: Record<string, string> = { "X-Bot-Token": this.#token };
     if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (options.reason) headers["X-Audit-Log-Reason"] = headerSafe(options.reason);
     // Same key on every retry, so a send that reached Stoat before the connection failed is not posted twice.
     if (method === "POST") headers["Idempotency-Key"] = randomUUID();
     const init: RequestInit = { method, headers };
@@ -115,6 +121,19 @@ export class Rest {
     if (remaining === null || resetAfter === null) return;
     this.#buckets.set(key, { remaining: Number(remaining), resetAt: this.#now() + Number(resetAfter) });
   }
+}
+
+/**
+ * Header values must be plain ASCII: fetch throws on "—" or an emoji. Accents are stripped ("café" → "cafe"),
+ * anything else non-ASCII becomes "?", and Stoat refuses reasons over 512 bytes.
+ */
+function headerSafe(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[^\x20-\x7e]/gu, "?")
+    .slice(0, 512);
 }
 
 async function readBody(res: Response): Promise<unknown> {
