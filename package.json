@@ -43,6 +43,10 @@
     "bot",
     "framework",
     "chat",
+    "discord.js",
+    "discord-bot",
+    "stoat.js",
+    "revolt.js",
     "typescript"
   ]
 }

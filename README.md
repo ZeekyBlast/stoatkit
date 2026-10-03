@@ -44,6 +44,30 @@ Create a bot under **User Settings → My Bots** in Stoat, invite it to a server
 
 Two runnable examples: [`examples/folder-bot/`](examples/folder-bot) (one file per command and event, the easiest start) and [`examples/mod-bot.ts`](examples/mod-bot.ts) (everything in one file).
 
+## Coming from discord.js
+
+Most of your bot carries over. The main differences:
+
+- **No intents.** Stoat sends every event, so it's `new Client({ token })` and `client.login()`.
+- **No slash commands.** Stoat doesn't have them. Use prefix commands with typed arguments (`client.commands.add`); bad input gets a usage reply automatically.
+- **Guilds are servers.** `message.guild` is `message.channel?.server`, `client.guilds.cache` is `client.servers`.
+- **Caches are plain `Map`s.** `client.users.get(id)`, not `client.users.cache.get(id)`.
+- **Authors can be uncached.** `message.author` may be `undefined`; `message.authorId` is always there.
+- **Replies don't ping** the person you reply to.
+
+| discord.js | stoatkit |
+|---|---|
+| `guildMemberAdd` / `guildMemberRemove` / `guildMemberUpdate` | `memberJoin` / `memberLeave` (with `"Leave"`, `"Kick"` or `"Ban"`) / `memberUpdate` |
+| `guildAuditLogEntryCreate` | `auditLogEntry` |
+| `member.timeout(ms, reason)` / `member.timeout(null)` | `member.timeout(ms, reason)` / `member.untimeout()` |
+| `member.ban({ reason, deleteMessageSeconds })`, `member.kick(reason)` | same |
+| `member.permissions.has("BanMembers")` | `missingPermissions(member.permissions, ["BanMembers"]).length === 0` |
+| `member.permissionsIn(channel)` | same, returns a `bigint` |
+| `target.moderatable` | `server.me?.canModerate(target)` |
+| `channel.setRateLimitPerUser(s)` | `channel.setSlowmode(s)` |
+| `user.createDM()` | `user.dm()` |
+| `new EmbedBuilder().setFooter({ text })` | `new EmbedBuilder().setFooter(text)`; fields and footer render as markdown |
+
 ## Commands and events: pick your level
 
 **Hop on.** One file per command or event, loaded from folders:
