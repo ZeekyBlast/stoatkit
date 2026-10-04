@@ -66,6 +66,8 @@ Most of your bot carries over. The main differences:
 | `target.moderatable` | `server.me?.canModerate(target)` |
 | `channel.setRateLimitPerUser(s)` | `channel.setSlowmode(s)` |
 | `user.createDM()` | `user.dm()` |
+| `message.reactions.cache.get("👍").users` | `message.reactions.get("👍")`, an array of user ids |
+| `messageReactionAdd(reaction, user)` | `messageReactionAdd({ messageId, userId, emoji, message })` |
 | `new EmbedBuilder().setFooter({ text })` | `new EmbedBuilder().setFooter(text)`; fields and footer render as markdown |
 
 ## Commands and events: pick your level
@@ -111,6 +113,7 @@ declare module "stoatkit" {
 - **Who did it**: after a kick, ban, role delete or channel delete, an `auditLogEntry` event names who did it. This needs View Audit Logs, and can be turned off with `auditLookup: false`.
 - **Servers, roles, members and channels** in the cache, with before/after events.
 - **Edits and deletes with the original message.** Stoat's delete event only carries an id. stoatkit keeps the newest 200 messages per channel (`messageCacheSize`), so `messageDelete` hands you the full message when it was cached, and `messageUpdate` gives you the before and after.
+- **Reactions**: `message.react(emoji)`, `unreact(emoji, userId?)` and `clearReactions(emoji?)`, with `message.reactions` (emoji to user ids) kept current by reaction events. `emoji` is a unicode emoji or a custom emoji id.
 - **Messages** expose attachments, user and role mentions, and whether they came from the system or a webhook; `client.fetchInvite(code)` resolves an invite.
 - **EmbedBuilder** with a discord.js-like API. Stoat embeds have no fields or footer, so those become markdown in the description.
 - **REST with rate limits.** Requests queue per Stoat rate-limit bucket (all `/servers/:id` calls share one), wait out `429`s, and retry server errors with backoff. Message sends carry an `Idempotency-Key`, so a retry never posts twice. Failures throw a typed `StoatAPIError`.
@@ -127,6 +130,9 @@ declare module "stoatkit" {
 | `messageUpdate` | `before` (`Message` or `null` if it wasn't cached), `after` |
 | `messageDelete` | `Message`, or `{ id, channelId }` if it wasn't cached |
 | `messageDeleteBulk` | `{ channelId, ids, messages }` |
+| `messageReactionAdd` | `{ messageId, channelId, userId, emoji, message }`; `message` is the cached message after the change, or `null` if it wasn't cached |
+| `messageReactionRemove` | same as `messageReactionAdd` |
+| `messageReactionRemoveEmoji` | `{ messageId, channelId, emoji, message }`: everyone's reactions with that emoji were removed. Clearing every reaction arrives as `messageUpdate` |
 | `memberJoin` | `member`. A join carries no user object, so `member.user` may be `undefined`: call `client.fetchUser(member.id)` for the name |
 | `memberLeave` | `Member`, or `{ id, serverId }` if it wasn't cached; then `reason`: `"Leave"`, `"Kick"` or `"Ban"` |
 | `memberUpdate` | `before` (`Member` or `null` if it wasn't cached), `after` |

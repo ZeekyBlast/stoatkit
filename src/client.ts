@@ -67,6 +67,9 @@ const EVENT_NAMES: Record<keyof ClientEvents, true> = {
   messageUpdate: true,
   messageDelete: true,
   messageDeleteBulk: true,
+  messageReactionAdd: true,
+  messageReactionRemove: true,
+  messageReactionRemoveEmoji: true,
   channelCreate: true,
   channelUpdate: true,
   channelDelete: true,
@@ -93,6 +96,16 @@ export type InviteInfo =
 /** What `messageDelete` gives you: the full message if it was cached, otherwise just its ids. */
 export type DeletedMessage = Message | { id: string; channelId: string };
 
+/** A reaction added or removed. `message` is the cached message after the change, or `null` if it wasn't cached. */
+export interface ReactionEvent {
+  messageId: string;
+  channelId: string;
+  userId: string;
+  /** A unicode emoji or a custom emoji id. */
+  emoji: string;
+  message: Message | null;
+}
+
 /** Every event the client emits, with its arguments. */
 export type ClientEvents = {
   ready: [];
@@ -100,6 +113,10 @@ export type ClientEvents = {
   messageUpdate: [before: Message | null, after: Message];
   messageDelete: [DeletedMessage];
   messageDeleteBulk: [{ channelId: string; ids: string[]; messages: Message[] }];
+  messageReactionAdd: [ReactionEvent];
+  messageReactionRemove: [ReactionEvent];
+  /** Everyone's reactions with one emoji were removed. */
+  messageReactionRemoveEmoji: [Omit<ReactionEvent, "userId">];
   channelCreate: [Channel];
   channelUpdate: [before: Channel, after: Channel];
   channelDelete: [Channel | { id: string }];
@@ -301,6 +318,23 @@ export class Client extends EventEmitter<ClientEvents> {
         this.#emit("messageDeleteBulk", { channelId: channel, ids, messages });
         return;
       }
+      case "MessageReact":
+      case "MessageUnreact": {
+        const { id, channel_id, user_id, emoji_id } = frame as unknown as ReactionFrame;
+        const added = frame.type === "MessageReact";
+        const message = this.#updateReaction(channel_id, id, emoji_id, (users) =>
+          added ? [...new Set([...users, user_id])] : users.filter((u) => u !== user_id),
+        );
+        const event = { messageId: id, channelId: channel_id, userId: user_id, emoji: emoji_id, message };
+        this.#emit(added ? "messageReactionAdd" : "messageReactionRemove", event);
+        return;
+      }
+      case "MessageRemoveReaction": {
+        const { id, channel_id, emoji_id } = frame as unknown as ReactionFrame;
+        const message = this.#updateReaction(channel_id, id, emoji_id, () => []);
+        this.#emit("messageReactionRemoveEmoji", { messageId: id, channelId: channel_id, emoji: emoji_id, message });
+        return;
+      }
       case "ServerCreate": {
         const { server, channels } = frame as unknown as { server: RawServer; channels?: RawChannel[] };
         this.servers.set(server._id, new Server(this, server));
@@ -440,6 +474,15 @@ export class Client extends EventEmitter<ClientEvents> {
     for (const [id, channel] of this.channels) if (channel.serverId === serverId) this.channels.delete(id);
   }
 
+  /** Applies a reaction change to the cached message. Uncached messages aren't fetched: a reaction storm would drain the bucket. */
+  #updateReaction(channelId: string, id: string, emoji: string, change: (users: readonly string[]) => string[]): Message | null {
+    const cached = this.messages.get(channelId, id);
+    if (!cached) return null;
+    const message = cached.withReaction(emoji, change(cached.reactions.get(emoji) ?? []));
+    this.messages.set(message);
+    return message;
+  }
+
   async #onMessageUpdate({ id, channel, data }: MessageUpdateFrame): Promise<void> {
     const before = this.messages.get(channel, id) ?? null;
     let after: Message;
@@ -530,4 +573,6 @@ function auditTarget(action: Schemas["AuditLogEntryAction"]): string | undefined
 type MemberUpdateFrame = { id: { server: string; user: string }; data: Schemas["PartialMember"]; clear?: string[] };
 type RoleUpdateFrame = { id: string; role_id: string; data: Schemas["PartialRole"]; clear?: string[] };
 type ChannelUpdateFrame = { id: string; data: Schemas["PartialChannel"]; clear?: string[] };
-type MessageUpdateFrame = { id: string; channel: string; data: { content?: string | null; edited?: string | null } };
+type MessageUpdateFrame = { id: string; channel: string; data: Parameters<Message["withUpdate"]>[0] };
+/** Reaction frames say `channel_id`, unlike the other message frames' `channel`. */
+type ReactionFrame = { id: string; channel_id: string; user_id: string; emoji_id: string };

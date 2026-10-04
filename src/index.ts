@@ -6,6 +6,7 @@ export {
   type ClientOptions,
   type ClientEvents,
   type DeletedMessage,
+  type ReactionEvent,
   type LeaveReason,
   type AuditAction,
   type AuditLogEntry,

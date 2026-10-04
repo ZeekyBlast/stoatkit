@@ -30,6 +30,8 @@ export class Message {
   /** A Stoat system message (joins, pins, ...), not something a member typed. */
   readonly isSystem: boolean;
   readonly isWebhook: boolean;
+  /** Emoji (a unicode emoji or a custom emoji id) to the ids of the users who reacted with it. */
+  readonly reactions: ReadonlyMap<string, readonly string[]>;
 
   constructor(client: Client, raw: RawMessage) {
     this.#client = client;
@@ -44,6 +46,7 @@ export class Message {
     this.roleMentionIds = raw.role_mentions ?? [];
     this.isSystem = raw.system != null;
     this.isWebhook = raw.webhook != null;
+    this.reactions = new Map(Object.entries(raw.reactions ?? {}));
   }
 
   get createdAt(): Date {
@@ -82,11 +85,39 @@ export class Message {
     await this.#client.rest.request("DELETE", `/channels/${this.channelId}/messages/${this.id}`);
   }
 
+  /** React with a unicode emoji or a custom emoji id. */
+  async react(emoji: string): Promise<void> {
+    await this.#client.rest.request("PUT", this.#reactionPath(emoji));
+  }
+
+  /** Remove the bot's reaction, or `userId`'s (needs Manage Messages). */
+  async unreact(emoji: string, userId?: string): Promise<void> {
+    await this.#client.rest.request("DELETE", this.#reactionPath(emoji) + (userId ? `?user_id=${userId}` : ""));
+  }
+
+  /** Remove everyone's reactions with `emoji`, or every reaction when no emoji is given. Needs Manage Messages. */
+  async clearReactions(emoji?: string): Promise<void> {
+    const path = emoji ? `${this.#reactionPath(emoji)}?remove_all=true` : `/channels/${this.channelId}/messages/${this.id}/reactions`;
+    await this.#client.rest.request("DELETE", path);
+  }
+
+  #reactionPath(emoji: string): string {
+    return `/channels/${this.channelId}/messages/${this.id}/reactions/${encodeURIComponent(emoji)}`;
+  }
+
   /** A copy with a MessageUpdate's changes applied. The original stays as the "before". */
-  withUpdate(data: { content?: string | null; edited?: string | null }): Message {
+  withUpdate(data: { content?: string | null; edited?: string | null; reactions?: Record<string, string[]> }): Message {
     const next: RawMessage = { ...this.#raw };
     if (data.content !== undefined) next.content = data.content;
     if (data.edited !== undefined) next.edited = data.edited;
+    if (data.reactions !== undefined) next.reactions = data.reactions;
     return new Message(this.#client, next);
+  }
+
+  /** A copy with `emoji`'s users replaced. No users removes the emoji. */
+  withReaction(emoji: string, users: string[]): Message {
+    const reactions = { ...this.#raw.reactions, [emoji]: users };
+    if (users.length === 0) delete reactions[emoji];
+    return new Message(this.#client, { ...this.#raw, reactions });
   }
 }
